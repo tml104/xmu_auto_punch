@@ -4,13 +4,13 @@ import json
 import logging
 
 
-async def send_qq_to_me():
+async def send_qq_to_me(msg: str):
     http_url = 'http://127.0.0.1:5700'
     params = {
         "action": "send_private_msg",
         "params": {
             "group_id": 1041159637,
-            "message": "打卡搞掂！"
+            "message": msg
         }
     }
 

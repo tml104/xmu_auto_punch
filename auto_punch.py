@@ -12,14 +12,12 @@ def get_second_delta():
     now_datetime = datetime.now()
     now_date = now_datetime.date()
     eight_clock = time(8, 0, 0)
-    res = datetime.combine(now_date+timedelta(days=1), eight_clock)
+    res = datetime.combine(now_date + timedelta(days=1), eight_clock)
 
-    return int(res.timestamp()-now_datetime.timestamp())
-
+    return int(res.timestamp() - now_datetime.timestamp())
 
 
 class AutoPuncher:
-
     URL = 'https://xmuxg.xmu.edu.cn/xmu/login?app=214'
     URL2 = 'https://xmuxg.xmu.edu.cn/app/214'
 
@@ -31,26 +29,24 @@ class AutoPuncher:
     async def punch(self):
 
         option = webdriver.ChromeOptions()
-        #option.add_argument('headless') #不显示前端
+        # option.add_argument('headless') #不显示前端
         driver = webdriver.Chrome(chrome_options=option, executable_path=self.chromedrive_path)
 
         try:
 
-
-            #进入登录页面
+            # 进入登录页面
             driver.get(self.URL)
             driver.find_elements_by_class_name("primary-btn")[2].click()
             await asyncio.sleep(2)
 
-
-            #模拟登录
+            # 模拟登录
             driver.find_element_by_id("username").clear()
             driver.find_element_by_id("password").clear()
             driver.find_element_by_id("username").send_keys(self.username)
             driver.find_element_by_id("password").send_keys(self.password)
             driver.find_element_by_class_name("auth_login_btn").click()
 
-            #模拟跳转
+            # 模拟跳转
             await asyncio.sleep(2)
             # driver.switch_to.window(driver.window_handles[-1])
             driver.get(self.URL2)
@@ -89,14 +85,21 @@ class AutoPuncher:
         while True:
 
             res = await self.punch()
-            while res == False:
-
+            fail_cnt = 0
+            while (not res) and fail_cnt <= 10:
                 res = await self.punch()
+                fail_cnt += 1
 
-            logging.info("Successfully Punched.")
+            if fail_cnt<=10:
+                logging.info("Successfully Punched.")
 
-            send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me()) #maybe can add a switch in here
-            logging.info("Successfully create send task")
+                send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡搞掂！"))  # maybe can add a switch in here
+                logging.info("Successfully create send task")
+            else:
+                logging.info("Punch Failed.")
+
+                send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡失败太多次了，请手动检查log确认错误原因"))  # maybe can add a switch in here
+                logging.info("Successfully create send task")
 
             # Wait until tomorrow
             time_to_sleep = get_second_delta()
@@ -105,12 +108,11 @@ class AutoPuncher:
             await send_task
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
 
     logging.basicConfig(filename='./log.txt', format="%(levelname)s , %(asctime)s: %(message)s", level=logging.DEBUG)
 
-
-    with open('./login.json','r',encoding='utf8') as f:
+    with open('./login.json', 'r', encoding='utf8') as f:
         j = json.load(f)
 
     logging.info("Json loaded.")
