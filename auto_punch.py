@@ -80,6 +80,7 @@ class AutoPuncher:
             # by default most browser will exit entirely.
             return True
         except Exception as e:
+            logging.error("Exception!!!", exc_info=True)
             return False
         finally:
             driver.quit()
