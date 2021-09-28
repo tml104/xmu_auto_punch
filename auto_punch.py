@@ -5,6 +5,7 @@ import aiohttp
 import asyncio
 from datetime import *
 import logging
+import send_qq_to_me
 
 
 def get_second_delta():
@@ -93,12 +94,14 @@ class AutoPuncher:
 
             logging.info("Successfully Punched.")
 
+            send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me()) #maybe can add a switch in here
+            logging.info("Successfully create send task")
+
             # Wait until tomorrow
             time_to_sleep = get_second_delta()
             logging.info("Wait until tomorrow 8:00 am. Wait seconds: %s", time_to_sleep)
             await asyncio.sleep(time_to_sleep)
-
-
+            await send_task
 
 
 if __name__=='__main__':
