@@ -12,7 +12,11 @@ def get_second_delta():
     now_datetime = datetime.now()
     now_date = now_datetime.date()
     eight_clock = time(8, 0, 0)
-    res = datetime.combine(now_date + timedelta(days=1), eight_clock)
+
+    if datetime.combine(now_date, eight_clock) - now_datetime >= timedelta(0):
+        res = datetime.combine(now_date , eight_clock)
+    else:
+        res = datetime.combine(now_date + timedelta(days=1), eight_clock)
 
     return int(res.timestamp() - now_datetime.timestamp())
 
@@ -86,26 +90,28 @@ class AutoPuncher:
 
             res = await self.punch()
             fail_cnt = 0
-            while (not res) and fail_cnt <= 10:
+            while (not res) and (fail_cnt <= 3):
                 res = await self.punch()
                 fail_cnt += 1
 
-            if fail_cnt<=10:
+            if fail_cnt<=3:
                 logging.info("Successfully Punched.")
 
-                send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡搞掂！"))  # maybe can add a switch in here
+                # send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡搞掂！"))  # maybe can add a switch in here
+                await send_qq_to_me.send_qq_to_me("打卡搞掂！")
                 logging.info("Successfully create send task")
+
             else:
                 logging.info("Punch Failed.")
 
-                send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡失败太多次了，请手动检查log确认错误原因"))  # maybe can add a switch in here
+                # send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡失败太多次了，请手动检查log确认错误原因"))  # maybe can add a switch in here
+                await send_qq_to_me.send_qq_to_me("打卡失败太多次了，请手动检查log确认错误原因")
                 logging.info("Successfully create send task")
 
             # Wait until tomorrow
             time_to_sleep = get_second_delta()
             logging.info("Wait until tomorrow 8:00 am. Wait seconds: %s", time_to_sleep)
             await asyncio.sleep(time_to_sleep)
-            await send_task
 
 
 if __name__ == '__main__':
