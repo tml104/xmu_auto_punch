@@ -1,12 +1,12 @@
 FROM ubuntu:18.04
 
 RUN apt update && apt-get update && \
-    apt install python3 && \
-    apt-get install python3-pip && \
-    apt install wget git unzip && \
+    apt install -y python3 && \
+    apt-get install -y python3-pip && \
+    apt install -y wget git unzip && \
 
     wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    apt install /google-chrome-stable_current_amd64.deb && \
+    apt install -y /google-chrome-stable_current_amd64.deb && \
 
     wget https://chromedriver.storage.googleapis.com/98.0.4758.80/chromedriver_linux64.zip && \
     unzip /chromedriver_linux64.zip && \
