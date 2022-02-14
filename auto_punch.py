@@ -1,6 +1,7 @@
 import json
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import aiohttp
 import asyncio
 from datetime import *
@@ -42,15 +43,19 @@ class AutoPuncher:
             尝试打卡
         '''
 
-        option = webdriver.ChromeOptions()
-        # option.add_argument('headless') #不显示前端
-        driver = webdriver.Chrome(chrome_options=option, executable_path=self.chromedrive_path)
+        chrome_options = Options()
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        driver = webdriver.Chrome(chrome_options=chrome_options, executable_path=self.chromedrive_path)
 
         try:
 
             # 进入登录页面
             driver.get(self.URL)
             driver.find_elements_by_class_name("primary-btn")[2].click()
+
+            logger.success("Find login page.")
             await asyncio.sleep(2)
 
             # 模拟登录
@@ -60,14 +65,20 @@ class AutoPuncher:
             driver.find_element_by_id("password").send_keys(self.password)
             driver.find_element_by_class_name("auth_login_btn").click()
 
-            # 模拟跳转
+            logger.success("Emulate login.")
             await asyncio.sleep(2)
+
+            # 模拟跳转
             # driver.switch_to.window(driver.window_handles[-1])
             driver.get(self.URL2)
+
+            logger.success("Jump.")
             await asyncio.sleep(2)
 
             # 点击我的表单
             driver.find_elements_by_class_name("tab")[1].click()
+
+            logger.success("Click my table.")
             await asyncio.sleep(3)
 
             # 判断是否已经打卡
@@ -92,7 +103,7 @@ class AutoPuncher:
 
         except Exception as e:
 
-            logger.error("Exception occurred when punching.")
+            logger.exception("Exception occurred when punching.")
             return False
 
         finally:
@@ -112,7 +123,7 @@ class AutoPuncher:
                 fail_cnt += 1
 
             if fail_cnt<=FAIL_CNT_UPB:
-                logger.info("Successfully Punched.")
+                logger.success("Successfully Punched.")
 
                 # send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡搞掂！"))  # maybe can add a switch in here
                 await send_qq_to_me.send_qq_to_me("打卡搞掂！")
@@ -135,7 +146,7 @@ class AutoPuncher:
 if __name__ == '__main__':
 
     #logging.basicConfig(filename='./log.txt', format="%(levelname)s , %(asctime)s: %(message)s", level=logging.DEBUG)
-    logger.add("file_{time}.log", rotation="1 month")
+    logger.add("file_{time}.log", rotation="1 month", backtrace=True, diagnose=True)
 
     # Load config
     with open('./login.json', 'r', encoding='utf8') as f:
