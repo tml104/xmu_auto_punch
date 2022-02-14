@@ -16,4 +16,4 @@ RUN apt update && apt-get update && \
 
 WORKDIR /xmu_auto_punch
 
-CMD ["python3","auto_punch.py"]
+# CMD ["python3","auto_punch.py"]
