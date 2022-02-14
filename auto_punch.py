@@ -4,14 +4,18 @@ from selenium import webdriver
 import aiohttp
 import asyncio
 from datetime import *
-import logging
+# import logging
+from loguru import logger
 import send_qq_to_me
 
 
-def get_second_delta():
+def get_second_delta(h:int = 8, m:int = 0, s:int = 0):
+    '''
+        取得当前时间和早上8点的unix时间戳差
+    '''
     now_datetime = datetime.now()
     now_date = now_datetime.date()
-    eight_clock = time(8, 0, 0)
+    eight_clock = time(h, m, s)
 
     if datetime.combine(now_date, eight_clock) - now_datetime >= timedelta(0):
         res = datetime.combine(now_date , eight_clock)
@@ -26,11 +30,17 @@ class AutoPuncher:
     URL2 = 'https://xmuxg.xmu.edu.cn/app/214'
 
     def __init__(self, username: str, password: str, chromedrive_path: str):
+        '''
+            初始化
+        '''
         self.username = username
         self.password = password
         self.chromedrive_path = chromedrive_path
 
     async def punch(self):
+        '''
+            尝试打卡
+        '''
 
         option = webdriver.ChromeOptions()
         # option.add_argument('headless') #不显示前端
@@ -54,11 +64,11 @@ class AutoPuncher:
             await asyncio.sleep(2)
             # driver.switch_to.window(driver.window_handles[-1])
             driver.get(self.URL2)
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)
 
             # 点击我的表单
             driver.find_elements_by_class_name("tab")[1].click()
-            await asyncio.sleep(5)
+            await asyncio.sleep(3)
 
             # 判断是否已经打卡
             text = driver.find_element_by_xpath("//div[@data-name='select_1582538939790']").text
@@ -79,62 +89,73 @@ class AutoPuncher:
             # The quit will exit entire browser whereas close will close one tab, but if just one tab was open,
             # by default most browser will exit entirely.
             return True
+
         except Exception as e:
-            logging.error("Exception!!!", exc_info=True)
+
+            logger.error("Exception occurred when punching.")
             return False
+
         finally:
             driver.quit()
 
     async def run(self):
+        '''
+            持久运行
+        '''
         while True:
 
             res = await self.punch()
             fail_cnt = 0
-            while (not res) and (fail_cnt <= 3):
+            FAIL_CNT_UPB = 1
+            while (not res) and (fail_cnt <= FAIL_CNT_UPB):
                 res = await self.punch()
                 fail_cnt += 1
 
-            if fail_cnt<=3:
-                logging.info("Successfully Punched.")
+            if fail_cnt<=FAIL_CNT_UPB:
+                logger.info("Successfully Punched.")
 
                 # send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡搞掂！"))  # maybe can add a switch in here
                 await send_qq_to_me.send_qq_to_me("打卡搞掂！")
-                logging.info("Successfully create send task")
+                logger.info("Successfully create send task")
 
             else:
-                logging.info("Punch Failed.")
+                logger.error("Punch Failed.")
 
                 # send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡失败太多次了，请手动检查log确认错误原因"))  # maybe can add a switch in here
                 await send_qq_to_me.send_qq_to_me("打卡失败太多次了，请手动检查log确认错误原因")
-                logging.info("Successfully create send task")
+
+                logger.info("Successfully create send task")
 
             # Wait until tomorrow
             time_to_sleep = get_second_delta()
-            logging.info("Wait until tomorrow 8:00 am. Wait seconds: %s", time_to_sleep)
+            logger.info("Wait until tomorrow 8:00 am. Wait seconds: {deltatime_value}", deltatime_value = time_to_sleep)
             await asyncio.sleep(time_to_sleep)
 
 
 if __name__ == '__main__':
 
-    logging.basicConfig(filename='./log.txt', format="%(levelname)s , %(asctime)s: %(message)s", level=logging.DEBUG)
+    #logging.basicConfig(filename='./log.txt', format="%(levelname)s , %(asctime)s: %(message)s", level=logging.DEBUG)
+    logger.add("file_{time}.log", rotation="1 month")
 
+    # Load config
     with open('./login.json', 'r', encoding='utf8') as f:
         j = json.load(f)
 
-    logging.info("Json loaded.")
+    logger.info("Json config loaded.")
 
+    # Init auto puncher
     autopuncher = AutoPuncher(
         j['username'],
         j['password'],
         j['chrome_path']
     )
 
-    logging.info("Autopuncher Instantiated.")
+    logger.info("Autopuncher Instantiated.")
 
     try:
-        logging.info("Begin to run loop.")
+        logger.info("Begin to run loop.")
         loop = asyncio.get_event_loop()
         loop.run_until_complete(autopuncher.run())
     finally:
-        logging.info("Stopped.")
+        logger.info("Stopped.")
         loop.close()

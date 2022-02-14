@@ -4,6 +4,7 @@ import json
 import logging
 
 
+
 async def send_qq_to_me(msg: str):
     http_url = 'http://127.0.0.1:5700/send_private_msg'
     params = {
