@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+COPY ./ /xmu_auto_punch
+
 RUN apt update && apt-get update && \
     apt install -y python3 && \
     apt-get install -y python3-pip && \
@@ -11,9 +13,11 @@ RUN apt update && apt-get update && \
     wget https://chromedriver.storage.googleapis.com/98.0.4758.80/chromedriver_linux64.zip && \
     unzip /chromedriver_linux64.zip && \
 
-    git clone https://github.com/tml104/xmu_auto_punch.git && \
+    # git clone https://github.com/tml104/xmu_auto_punch.git && \
     pip3 install -r /xmu_auto_punch/requirements.txt
 
 WORKDIR /xmu_auto_punch
 
-# CMD ["python3","auto_punch.py"]
+ENV DOCKER_RUNNING=true
+
+CMD ["python3","auto_punch.py"]

@@ -8,6 +8,7 @@ from datetime import *
 # import logging
 from loguru import logger
 import send_qq_to_me
+import send_email_to_me
 
 
 def get_second_delta(h:int = 8, m:int = 0, s:int = 0):
@@ -30,13 +31,16 @@ class AutoPuncher:
     URL = 'https://xmuxg.xmu.edu.cn/xmu/login?app=214'
     URL2 = 'https://xmuxg.xmu.edu.cn/app/214'
 
-    def __init__(self, username: str, password: str, chromedrive_path: str):
+    def __init__(self, username: str, password: str, chromedrive_path: str, send_qq_to_me: bool, send_email_to_me: bool, email_info: map):
         '''
             初始化
         '''
         self.username = username
         self.password = password
         self.chromedrive_path = chromedrive_path
+        self.send_qq_to_me = send_email_to_me
+        self.send_email_to_me = send_email_to_me
+        self.email_info = email_info
 
     async def punch(self):
         '''
@@ -122,20 +126,30 @@ class AutoPuncher:
                 res = await self.punch()
                 fail_cnt += 1
 
+            async def send_xx_to_me(msg: str):
+                try:
+                    if(self.send_qq_to_me):
+                        await send_qq_to_me.send_qq_to_me(msg)
+                        logger.info("Successfully create send task")
+                except Exception as e:
+                    logger.exception("Exception Raised when send_qq_to_me")
+
+                try:
+                    if(self.send_email_to_me):
+                        await send_email_to_me.send_email_to_me(msg,self.email_info)
+                        logger.info("Successfully send email")
+                except Exception as e:
+                    logger.exception("Exception Raised when send_email_to_me")
+
             if fail_cnt<=FAIL_CNT_UPB:
                 logger.success("Successfully Punched.")
-
-                # send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡搞掂！"))  # maybe can add a switch in here
-                await send_qq_to_me.send_qq_to_me("打卡搞掂！")
-                logger.info("Successfully create send task")
-
+                success_punch_msg = "打卡搞掂！"
+                await send_xx_to_me(success_punch_msg)
+                    
             else:
                 logger.error("Punch Failed.")
-
-                # send_task = asyncio.create_task(send_qq_to_me.send_qq_to_me("打卡失败太多次了，请手动检查log确认错误原因"))  # maybe can add a switch in here
-                await send_qq_to_me.send_qq_to_me("打卡失败太多次了，请手动检查log确认错误原因")
-
-                logger.info("Successfully create send task")
+                fail_punch_msg = "打卡失败太多次了，请手动检查log确认错误原因"
+                await send_xx_to_me(fail_punch_msg)
 
             # Wait until tomorrow
             time_to_sleep = get_second_delta()
@@ -158,7 +172,10 @@ if __name__ == '__main__':
     autopuncher = AutoPuncher(
         j['username'],
         j['password'],
-        j['chrome_path']
+        j['chrome_path'],
+        j['send_qq_to_me'],
+        j['send_email_to_me'],
+        j['email_info'],
     )
 
     logger.info("Autopuncher Instantiated.")
