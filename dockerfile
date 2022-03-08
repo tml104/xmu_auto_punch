@@ -18,6 +18,6 @@ RUN apt update && apt-get update && \
 
 WORKDIR /xmu_auto_punch
 
-ENV DOCKER_RUNNING=true ZT=Asia/Shanghai
+ENV DOCKER_RUNNING=true ZT="Asia/Shanghai"
 
 CMD ["python3","auto_punch.py"]
