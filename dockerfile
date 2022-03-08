@@ -10,7 +10,7 @@ RUN apt update && apt-get update && \
     wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt install -y /google-chrome-stable_current_amd64.deb && \
 
-    wget https://chromedriver.storage.googleapis.com/98.0.4758.80/chromedriver_linux64.zip && \
+    wget https://chromedriver.storage.googleapis.com/LATEST_RELEASE/chromedriver_linux64.zip && \
     unzip /chromedriver_linux64.zip && \
 
     # git clone https://github.com/tml104/xmu_auto_punch.git && \
